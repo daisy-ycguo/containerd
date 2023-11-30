@@ -385,8 +385,21 @@ func (p *PoolDevice) CreateSnapshotDevice(ctx context.Context, deviceName string
 
 func (p *PoolDevice) createSnapshot(ctx context.Context, baseInfo, snapInfo *DeviceInfo) error {
 	if err := p.transition(ctx, snapInfo.Name, Creating, Created, func() error {
+		fmt.Printf("pool_device.create snapshot %q (dev: %d) from %q (dev: %d)\n",
+			snapInfo.Name,
+			snapInfo.DeviceID,
+			baseInfo.Name,
+			baseInfo.DeviceID,
+		)
 		return dmsetup.CreateSnapshot(p.poolName, snapInfo.DeviceID, baseInfo.DeviceID)
 	}); err != nil {
+		fmt.Printf(
+			"failed to create snapshot %q (dev: %d) from %q (dev: %d): %w\n",
+			snapInfo.Name,
+			snapInfo.DeviceID,
+			baseInfo.Name,
+			baseInfo.DeviceID, err,
+		)
 		return fmt.Errorf(
 			"failed to create snapshot %q (dev: %d) from %q (dev: %d): %w",
 			snapInfo.Name,

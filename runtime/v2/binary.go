@@ -68,7 +68,6 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 		args = append(args, "-debug")
 	}
 	args = append(args, "start")
-
 	cmd, err := client.Command(
 		ctx,
 		&client.CommandConfig{
@@ -80,9 +79,11 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 			Args:         args,
 			SchedCore:    b.schedCore,
 		})
+	log.G(ctx).Infof(b.containerdAddress)
 	if err != nil {
 		return nil, err
 	}
+
 	// Windows needs a namespace when openShimLog
 	ns, _ := namespaces.Namespace(ctx)
 	shimCtx, cancelShimLog := context.WithCancel(namespaces.WithNamespace(context.Background(), ns))
@@ -104,7 +105,10 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 	// this helps with synchronization of the shim
 	// copy the shim's logs to containerd's output
 	go func() {
-		defer f.Close()
+		defer func() {
+			f.Close()
+		}()
+
 		_, err := io.Copy(os.Stderr, f)
 		// To prevent flood of error messages, the expected error
 		// should be reset, like os.ErrClosed or os.ErrNotExist, which
@@ -119,6 +123,7 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 		return nil, fmt.Errorf("%s: %w", out, err)
 	}
 	address := strings.TrimSpace(string(out))
+	// log.G(ctx).Infof("address=%s", address)
 	conn, err := client.Connect(address, client.AnonDialer)
 	if err != nil {
 		return nil, err

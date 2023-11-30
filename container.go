@@ -31,6 +31,7 @@ import (
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/runtime/v2/runc/options"
 	"github.com/containerd/fifo"
@@ -208,6 +209,8 @@ func (c *container) Image(ctx context.Context) (Image, error) {
 }
 
 func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...NewTaskOpts) (_ Task, err error) {
+	//log.G(ctx).Infof("---into Container's NewTask!!!---")
+	fmt.Println("---into Container's NewTask!!!---")
 	i, err := ioCreate(c.id)
 	if err != nil {
 		return nil, err
@@ -230,6 +233,7 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 	if err != nil {
 		return nil, err
 	}
+	log.G(ctx).Infof("--- r.SnapshotKey=%s", r.SnapshotKey)
 	if r.SnapshotKey != "" {
 		if r.Snapshotter == "" {
 			return nil, fmt.Errorf("unable to resolve rootfs mounts without snapshotter on container: %w", errdefs.ErrInvalidArgument)
@@ -240,6 +244,7 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 		if err != nil {
 			return nil, err
 		}
+		log.G(ctx).Infof("--- before s.Mounts, s.type=%t, s.value=%v", s, s)
 		mounts, err := s.Mounts(ctx, r.SnapshotKey)
 		if err != nil {
 			return nil, err
@@ -270,6 +275,7 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 			return nil, err
 		}
 	}
+	log.G(ctx).Infof("--- info.RootFS=%v", info.RootFS)
 	if info.RootFS != nil {
 		for _, m := range info.RootFS {
 			request.Rootfs = append(request.Rootfs, &types.Mount{
@@ -279,6 +285,7 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 			})
 		}
 	}
+	log.G(ctx).Infof("--- info.Options=%v", info.Options)
 	if info.Options != nil {
 		any, err := typeurl.MarshalAny(info.Options)
 		if err != nil {
@@ -295,6 +302,7 @@ func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...N
 	if info.Checkpoint != nil {
 		request.Checkpoint = info.Checkpoint
 	}
+	//log.G(ctx).Infof("------------------------- into Container's NewTask!!!  TaskService 's Create--------------------------------------")
 	response, err := c.client.TaskService().Create(ctx, request)
 	if err != nil {
 		return nil, errdefs.FromGRPC(err)

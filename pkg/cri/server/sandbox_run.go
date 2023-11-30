@@ -61,6 +61,7 @@ func init() {
 func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandboxRequest) (_ *runtime.RunPodSandboxResponse, retErr error) {
 	config := r.GetConfig()
 	log.G(ctx).Debugf("Sandbox config %+v", config)
+	log.G(ctx).Debugf("RunPodSandboxRequest=%+v", r)
 
 	// Generate unique id and name for the sandbox and reserve the name.
 	id := util.GenerateID()
@@ -112,6 +113,11 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image from containerd %q: %w", image.ID, err)
 	}
+
+	// set infra container's runtime to default runtime => runc
+	org_runtime := r.GetRuntimeHandler()
+	log.G(ctx).Debugf("org runtime = %q", org_runtime)
+	r.RuntimeHandler = ""
 
 	ociRuntime, err := c.getSandboxRuntime(config, r.GetRuntimeHandler())
 	if err != nil {
@@ -339,6 +345,7 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// We don't need stdio for sandbox container.
 	task, err := container.NewTask(ctx, containerdio.NullIO, taskOpts...)
 	if err != nil {
+		log.G(ctx).Error("failed to create containerd task")
 		return nil, fmt.Errorf("failed to create containerd task: %w", err)
 	}
 	defer func() {
@@ -398,6 +405,15 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// but we don't care about sandbox TaskOOM right now, so it is fine.
 	c.eventMonitor.startSandboxExitMonitor(context.Background(), id, task.Pid(), exitCh)
 
+	//<<<<<<< Updated upstream
+	//=======
+	r.RuntimeHandler = org_runtime
+	log.G(ctx).Debugf("end request = %q", r)
+
+	// Send CONTAINER_STARTED event with both ContainerId and SandboxId equal to SandboxId.
+	//c.generateAndSendContainerEvent(ctx, id, id, runtime.ContainerEventType_CONTAINER_STARTED_EVENT)
+
+	//>>>>>>> Stashed changes
 	sandboxRuntimeCreateTimer.WithValues(ociRuntime.Type).UpdateSince(runtimeStart)
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil

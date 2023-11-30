@@ -126,7 +126,6 @@ func (r *RuntimeService) RunPodSandbox(config *runtimeapi.PodSandboxConfig, runt
 
 	ctx, cancel := getContextWithTimeout(timeout)
 	defer cancel()
-
 	resp, err := r.runtimeClient.RunPodSandbox(ctx, &runtimeapi.RunPodSandboxRequest{
 		Config:         config,
 		RuntimeHandler: runtimeHandler,

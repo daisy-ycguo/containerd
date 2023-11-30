@@ -105,7 +105,10 @@ func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 
 	start := time.Now()
 	// Run container using the same runtime with sandbox.
-	sandboxInfo, err := sandbox.Container.Info(ctx)
+	// sandboxInfo, err := sandbox.Container.Info(ctx)
+
+	// sandboxInfo, err := sandbox.Container.Info(ctx) // runc
+	log.G(ctx).Debug("sandboxInfo.metadata =", sandbox.Metadata.RuntimeHandler) //fc
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sandbox %q info: %w", sandboxID, err)
 	}
@@ -234,13 +237,14 @@ func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 
 	containerLabels := buildLabels(config.Labels, image.ImageSpec.Config.Labels, containerKindContainer)
 
-	runtimeOptions, err := getRuntimeOptions(sandboxInfo)
+	// runtimeOptions, err := getRuntimeOptions(sandboxInfo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get runtime options: %w", err)
 	}
 	opts = append(opts,
 		containerd.WithSpec(spec, specOpts...),
-		containerd.WithRuntime(sandboxInfo.Runtime.Name, runtimeOptions),
+		// containerd.WithRuntime(sandboxInfo.Runtime.Name, runtimeOptions),
+		containerd.WithRuntime(ociRuntime.Type, nil),
 		containerd.WithContainerLabels(containerLabels),
 		containerd.WithContainerExtension(containerMetadataExtension, &meta))
 	var cntr containerd.Container

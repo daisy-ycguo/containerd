@@ -253,6 +253,7 @@ func ensureRemoveAll(ctx context.Context, dir string) error {
 
 var vmbasedRuntimes = []string{
 	"io.containerd.kata",
+	"io.containerd.aws.firecracker",
 }
 
 func isVMBasedRuntime(runtimeType string) bool {

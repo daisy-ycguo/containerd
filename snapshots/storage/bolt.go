@@ -213,6 +213,7 @@ func GetSnapshot(ctx context.Context, key string) (s Snapshot, err error) {
 
 // CreateSnapshot inserts a record for an active or view snapshot with the provided parent.
 func CreateSnapshot(ctx context.Context, kind snapshots.Kind, key, parent string, opts ...snapshots.Opt) (s Snapshot, err error) {
+	fmt.Printf("into storage.bolt.CreateSnapshot:kind=%v,key=%s,opts=%v.\n", kind, key, opts)
 	switch kind {
 	case snapshots.KindActive, snapshots.KindView:
 	default:
