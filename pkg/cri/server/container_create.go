@@ -104,9 +104,8 @@ func (c *criService) CreateContainer(ctx context.Context, r *runtime.CreateConta
 	}
 
 	start := time.Now()
-	// Run container using the same runtime with sandbox.
-	// sandboxInfo, err := sandbox.Container.Info(ctx)
 
+	// Run container using the same runtime with sandbox.
 	// sandboxInfo, err := sandbox.Container.Info(ctx) // runc
 	log.G(ctx).Debug("sandboxInfo.metadata =", sandbox.Metadata.RuntimeHandler) //fc
 	if err != nil {

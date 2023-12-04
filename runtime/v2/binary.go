@@ -68,6 +68,7 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 		args = append(args, "-debug")
 	}
 	args = append(args, "start")
+
 	cmd, err := client.Command(
 		ctx,
 		&client.CommandConfig{
@@ -79,7 +80,7 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 			Args:         args,
 			SchedCore:    b.schedCore,
 		})
-	log.G(ctx).Infof(b.containerdAddress)
+	log.G(ctx).Debugf(b.containerdAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -105,9 +106,7 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 	// this helps with synchronization of the shim
 	// copy the shim's logs to containerd's output
 	go func() {
-		defer func() {
-			f.Close()
-		}()
+		defer f.Close()
 
 		_, err := io.Copy(os.Stderr, f)
 		// To prevent flood of error messages, the expected error

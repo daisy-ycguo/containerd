@@ -405,15 +405,9 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// but we don't care about sandbox TaskOOM right now, so it is fine.
 	c.eventMonitor.startSandboxExitMonitor(context.Background(), id, task.Pid(), exitCh)
 
-	//<<<<<<< Updated upstream
-	//=======
 	r.RuntimeHandler = org_runtime
 	log.G(ctx).Debugf("end request = %q", r)
 
-	// Send CONTAINER_STARTED event with both ContainerId and SandboxId equal to SandboxId.
-	//c.generateAndSendContainerEvent(ctx, id, id, runtime.ContainerEventType_CONTAINER_STARTED_EVENT)
-
-	//>>>>>>> Stashed changes
 	sandboxRuntimeCreateTimer.WithValues(ociRuntime.Type).UpdateSince(runtimeStart)
 
 	return &runtime.RunPodSandboxResponse{PodSandboxId: id}, nil

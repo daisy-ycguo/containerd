@@ -175,7 +175,6 @@ func (s *Snapshotter) Usage(ctx context.Context, key string) (snapshots.Usage, e
 
 // Mounts return the list of mounts for the active or view snapshot
 func (s *Snapshotter) Mounts(ctx context.Context, key string) ([]mount.Mount, error) {
-	//debug.PrintStack()
 	var (
 		snap storage.Snapshot
 		err  error
@@ -371,7 +370,7 @@ func (s *Snapshotter) Close() error {
 
 func (s *Snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, key, parent string, opts ...snapshots.Opt) ([]mount.Mount, error) {
 	var fileSystemType fsType
-	log.G(ctx).Info("---------------Into createSnapshot !!!--------------------------")
+	log.G(ctx).Debug("---------------Into createSnapshot --------------------------")
 
 	// For snapshots with no parents, we use file system type as configured in config.
 	// For snapshots with parents, we inherit the file system type. We use the same
@@ -379,7 +378,7 @@ func (s *Snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 	fsLabel := make(map[string]string)
 	if len(parent) == 0 {
 		fileSystemType = s.config.FileSystemType
-		log.G(ctx).Infof("---------------len(parent)==0 filesystem is %s--------------------------", fileSystemType)
+		log.G(ctx).Debugf("---------------len(parent)==0 filesystem is %s--------------------------", fileSystemType)
 	} else {
 		_, snapInfo, _, err := storage.GetInfo(ctx, parent)
 		if err != nil {
@@ -387,7 +386,7 @@ func (s *Snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 			return nil, err
 		}
 		fileSystemType = fsType(snapInfo.Labels[devmapperSnapshotFsType])
-		log.G(ctx).Infof("---------------len(parent)!=0 filesystem is %s--------------------------", fileSystemType)
+		log.G(ctx).Debugf("---------------len(parent)!=0 filesystem is %s--------------------------", fileSystemType)
 		if fileSystemType == "" {
 			// For parent snapshots created without label support, we can assume that
 			// they are ext4 type. Children of parents with no label for fsType will
@@ -405,10 +404,10 @@ func (s *Snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 	if err != nil {
 		return nil, err
 	}
-	log.G(ctx).Infof("---storage.CreateSnapshot.opts=%v.\n", opts)
+	log.G(ctx).Debugf("---storage.CreateSnapshot.opts=%v.\n", opts)
 
 	if len(snap.ParentIDs) == 0 {
-		log.G(ctx).Infof("---------------into len(snap.ParentIDs) == 0-------------------------")
+		log.G(ctx).Debugf("---------------into len(snap.ParentIDs) == 0-------------------------")
 		fsOptions := ""
 		deviceName := s.getDeviceName(snap.ID)
 		log.G(ctx).Debugf("creating new thin device '%s'", deviceName)
@@ -438,25 +437,25 @@ func (s *Snapshotter) createSnapshot(ctx context.Context, kind snapshots.Kind, k
 				s.pool.RemoveDevice(ctx, deviceName))
 		}
 	} else {
-		log.G(ctx).Infof("---------------into len(snap.ParentIDs) != 0-------------------------")
+		log.G(ctx).Debugf("---------------into len(snap.ParentIDs) != 0-------------------------")
 		parentDeviceName := s.getDeviceName(snap.ParentIDs[0])
 		snapDeviceName := s.getDeviceName(snap.ID)
-		log.G(ctx).Infof("---------------parentDeviceName is %s-------------------------", parentDeviceName)
-		log.G(ctx).Infof("---------------snapDeviceName is %s-------------------------", snapDeviceName)
+		log.G(ctx).Debugf("---------------parentDeviceName is %q-------------------------", parentDeviceName)
+		log.G(ctx).Debugf("---------------snapDeviceName is %q-------------------------", snapDeviceName)
 
 		log.G(ctx).Debugf("creating snapshot device '%s' from '%s' with fsType: '%s'", snapDeviceName, parentDeviceName, fileSystemType)
 
-		log.G(ctx).Infof("---------------before create image s.config.BaseImageSizeBytes is %s-------------------------", s.config.BaseImageSizeBytes)
-		log.G(ctx).Infof("s.pool.poolName=%s.\n", s.pool.poolName)
+		log.G(ctx).Debugf("---------------before create image s.config.BaseImageSizeBytes is %v-------------------------", s.config.BaseImageSizeBytes)
+		log.G(ctx).Debugf("s.pool.poolName=%s.\n", s.pool.poolName)
 		err = s.pool.CreateSnapshotDevice(ctx, parentDeviceName, snapDeviceName, s.config.BaseImageSizeBytes)
 		if err != nil {
 			log.G(ctx).WithError(err).Errorf("failed to create snapshot device from parent %s", parentDeviceName)
 			return nil, err
 		}
 	}
-	log.G(ctx).Infof("--------------- before buildMounts !!!-------------------------")
+	log.G(ctx).Debugf("--------------- before buildMounts !!!-------------------------")
 	mounts := s.buildMounts(ctx, snap, fileSystemType)
-	log.G(ctx).Infof("--------------- mount is %s-------------------------", mounts)
+	log.G(ctx).Debugf("--------------- mount is %s-------------------------", mounts)
 	// Remove default directories not expected by the container image
 	_ = mount.WithTempMount(ctx, mounts, func(root string) error {
 		return os.Remove(filepath.Join(root, "lost+found"))

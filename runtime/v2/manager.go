@@ -167,7 +167,6 @@ func (m *ShimManager) Start(ctx context.Context, id string, opts runtime.CreateO
 		}
 	}()
 	shim, err := m.startShim(ctx, bundle, id, opts)
-
 	if err != nil {
 		return nil, err
 	}
@@ -194,8 +193,7 @@ func (m *ShimManager) Start(ctx context.Context, id string, opts runtime.CreateO
 func (m *ShimManager) startShim(ctx context.Context, bundle *Bundle, id string, opts runtime.CreateOpts) (*shim, error) {
 	fmt.Println("---into ShimManager.startShim---")
 	ns, err := namespaces.NamespaceRequired(ctx)
-	log.G(ctx).Infof("------------------------- ShimManager's startShim  namespace is : --------------------------------------")
-	log.G(ctx).Infof(ns)
+	log.G(ctx).Debugf("------------------------- ShimManager's startShim  namespace is %q: --------------------------------------", ns)
 	if err != nil {
 		return nil, err
 	}
@@ -206,8 +204,7 @@ func (m *ShimManager) startShim(ctx context.Context, bundle *Bundle, id string, 
 	}
 
 	runtimePath, err := m.resolveRuntimePath(opts.Runtime)
-	log.G(ctx).Infof("------------------------- ShimManager's startShim  runtimePath is : --------------------------------------")
-	log.G(ctx).Infof(runtimePath)
+	log.G(ctx).Debugf("------------------------- ShimManager's startShim  runtimePath is %q: --------------------------------------", runtimePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve runtime path: %w", err)
 	}
@@ -218,14 +215,12 @@ func (m *ShimManager) startShim(ctx context.Context, bundle *Bundle, id string, 
 		ttrpcAddress: m.containerdTTRPCAddress,
 		schedCore:    m.schedCore,
 	})
-	log.G(ctx).Infof("------------------------- shimBinary's Config's containerdAddress and containerdTTRPCAddress is : --------------------------------------")
-	log.G(ctx).Infof("containerdAddress is =%d", m.containerdAddress)
-	log.G(ctx).Infof("containerdTTRPCAddress is =%d", m.containerdTTRPCAddress)
+	log.G(ctx).Debugf("------------------------- shimBinary's Config's containerdAddress is %q and containerdTTRPCAddress is %q --------------------------------------", m.containerdAddress, m.containerdTTRPCAddress)
+	log.G(ctx).Debugf("------------------------- ShimManager's startShim  call start function : --------------------------------------")
 
-	log.G(ctx).Infof("------------------------- ShimManager's startShim  call start function : --------------------------------------")
 	shim, err := b.Start(ctx, topts, func() {
 		log.G(ctx).WithField("id", id).Info("shim disconnected")
-		log.G(ctx).Infof("------------------------- ShimManager's shim disconnected : --------------------------------------")
+		log.G(ctx).Debugf("------------------------- ShimManager's shim disconnected --------------------------------------")
 		cleanupAfterDeadShim(context.Background(), id, ns, m.shims, m.events, b)
 		// Remove self from the runtime task list. Even though the cleanupAfterDeadShim()
 		// would publish taskExit event, but the shim.Delete() would always failed with ttrpc
@@ -233,9 +228,9 @@ func (m *ShimManager) startShim(ctx context.Context, bundle *Bundle, id string, 
 		// Thus it's better to delete it here.
 		m.shims.Delete(ctx, id)
 	})
-	log.G(ctx).Infof("------------------------- ShimManager's startShim  after call start function : --------------------------------------")
+	log.G(ctx).Debugf("------------------------- ShimManager's startShim  after call start function  --------------------------------------")
 	if err != nil {
-		log.G(ctx).Infof("------------------------- shim start has error!!! : --------------------------------------")
+		log.G(ctx).Debugf("------------------------- shim start has error!!! --------------------------------------")
 		return nil, fmt.Errorf("start failed: %w", err)
 	}
 
@@ -379,7 +374,7 @@ func (m *TaskManager) ID() string {
 // Create launches new shim instance and creates new task
 func (m *TaskManager) Create(ctx context.Context, taskID string, opts runtime.CreateOpts) (runtime.Task, error) {
 	process, err := m.manager.Start(ctx, taskID, opts)
-	log.G(ctx).Infof("------------------------- TaskManager's Create --------------------------------------")
+	log.G(ctx).Debugf("------------------------- TaskManager's Create --------------------------------------")
 	if err != nil {
 		return nil, fmt.Errorf("failed to start shim: %w", err)
 	}
@@ -387,10 +382,10 @@ func (m *TaskManager) Create(ctx context.Context, taskID string, opts runtime.Cr
 	// Cast to shim task and call task service to create a new container task instance.
 	// This will not be required once shim service / client implemented.
 	shim := process.(*shimTask)
-	log.G(ctx).Infof("Before shim create function")
+	log.G(ctx).Debugf("Before shim create function")
 	t, err := shim.Create(ctx, opts)
 	if err != nil {
-		log.G(ctx).Infof("Into shim create error!!!!")
+		log.G(ctx).Debugf("Into shim create error!!!!")
 		// NOTE: ctx contains required namespace information.
 		m.manager.shims.Delete(ctx, taskID)
 
