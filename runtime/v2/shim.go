@@ -268,7 +268,7 @@ func (s *shimTask) PID(ctx context.Context) (uint32, error) {
 	if err != nil {
 		return 0, errdefs.FromGRPC(err)
 	}
-
+	log.G(ctx).Debugf("outof v2.shim.PID, resp=%v", response)
 	return response.TaskPid, nil
 }
 
@@ -346,7 +346,8 @@ func (s *shimTask) Create(ctx context.Context, opts runtime.CreateOpts) (runtime
 		})
 	}
 
-	_, err := s.task.Create(ctx, request)
+	rep, err := s.task.Create(ctx, request)
+	log.G(ctx).Infof("s.task.Create resp=%v", rep)
 	if err != nil {
 		return nil, errdefs.FromGRPC(err)
 	}
@@ -518,15 +519,18 @@ func (s *shimTask) Process(ctx context.Context, id string) (runtime.ExecProcess,
 }
 
 func (s *shimTask) State(ctx context.Context) (runtime.State, error) {
+	log.G(ctx).Infof("into va.shim.State, shimid=%s", s.ID())
 	response, err := s.task.State(ctx, &task.StateRequest{
 		ID: s.ID(),
 	})
 	if err != nil {
+		log.G(ctx).Infof("into va.shim.State, err=%v", err)
 		if !errors.Is(err, ttrpc.ErrClosed) {
 			return runtime.State{}, errdefs.FromGRPC(err)
 		}
 		return runtime.State{}, errdefs.ErrNotFound
 	}
+	log.G(ctx).Infof("into va.shim.State, resp=%s", response.Status)
 	var status runtime.Status
 	switch response.Status {
 	case tasktypes.StatusCreated:
@@ -540,6 +544,8 @@ func (s *shimTask) State(ctx context.Context) (runtime.State, error) {
 	case tasktypes.StatusPausing:
 		status = runtime.PausingStatus
 	}
+	log.G(ctx).Infof("into va.shim.State, pid=%d, status=%s", response.Pid, status)
+	//debug.PrintStack()
 	return runtime.State{
 		Pid:        response.Pid,
 		Status:     status,

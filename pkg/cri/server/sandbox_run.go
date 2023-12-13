@@ -114,10 +114,9 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 		return nil, fmt.Errorf("failed to get image from containerd %q: %w", image.ID, err)
 	}
 
+	// Daisy
 	// set infra container's runtime to default runtime => runc
-	org_runtime := r.GetRuntimeHandler()
-	log.G(ctx).Debugf("org runtime = %q", org_runtime)
-	r.RuntimeHandler = ""
+	log.G(ctx).Debugf("org runtime = %q", r.GetRuntimeHandler())
 
 	ociRuntime, err := c.getSandboxRuntime(config, r.GetRuntimeHandler())
 	if err != nil {
@@ -404,9 +403,6 @@ func (c *criService) RunPodSandbox(ctx context.Context, r *runtime.RunPodSandbox
 	// TaskOOM from containerd may come before sandbox is added to store,
 	// but we don't care about sandbox TaskOOM right now, so it is fine.
 	c.eventMonitor.startSandboxExitMonitor(context.Background(), id, task.Pid(), exitCh)
-
-	r.RuntimeHandler = org_runtime
-	log.G(ctx).Debugf("end request = %q", r)
 
 	sandboxRuntimeCreateTimer.WithValues(ociRuntime.Type).UpdateSince(runtimeStart)
 

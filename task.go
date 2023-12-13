@@ -207,6 +207,7 @@ func (t *task) Pid() uint32 {
 }
 
 func (t *task) Start(ctx context.Context) error {
+	fmt.Println("into task.Start")
 	r, err := t.client.TaskService().Start(ctx, &tasks.StartRequest{
 		ContainerID: t.id,
 	})
@@ -217,6 +218,7 @@ func (t *task) Start(ctx context.Context) error {
 		}
 		return errdefs.FromGRPC(err)
 	}
+	fmt.Println("out of task.Start, pid=%d", r.Pid)
 	t.pid = r.Pid
 	return nil
 }
