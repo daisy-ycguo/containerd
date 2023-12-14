@@ -40,6 +40,7 @@ import (
 	ver "github.com/opencontainers/image-spec/specs-go"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -209,8 +210,7 @@ func (c *container) Image(ctx context.Context) (Image, error) {
 }
 
 func (c *container) NewTask(ctx context.Context, ioCreate cio.Creator, opts ...NewTaskOpts) (_ Task, err error) {
-	//log.G(ctx).Infof("---into Container's NewTask!!!---")
-	fmt.Println("---into Container's NewTask!!!---")
+	log.G(ctx).Infof("---into containerd's NewTask!!!---")
 	i, err := ioCreate(c.id)
 	if err != nil {
 		return nil, err
@@ -397,6 +397,7 @@ func (c *container) loadTask(ctx context.Context, ioAttach cio.Attach) (Task, er
 		ContainerID: c.id,
 	})
 	if err != nil {
+		fmt.Printf("%+v\n", errors.WithStack(err))
 		err = errdefs.FromGRPC(err)
 		if errdefs.IsNotFound(err) {
 			return nil, fmt.Errorf("no running task found: %w", err)

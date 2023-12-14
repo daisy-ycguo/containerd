@@ -80,7 +80,7 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 			Args:         args,
 			SchedCore:    b.schedCore,
 		})
-	log.G(ctx).Debugf(b.containerdAddress)
+	//log.G(ctx).Debugf("v2.binary.Start, %s", b.containerdAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -117,12 +117,13 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 			log.G(ctx).WithError(err).Error("copy shim log")
 		}
 	}()
+	// Run command and get output
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", out, err)
 	}
 	address := strings.TrimSpace(string(out))
-	// log.G(ctx).Infof("address=%s", address)
+	log.G(ctx).Debugf("address=%s", address)
 	conn, err := client.Connect(address, client.AnonDialer)
 	if err != nil {
 		return nil, err
@@ -137,6 +138,7 @@ func (b *binary) Start(ctx context.Context, opts *types.Any, onClose func()) (_ 
 		return nil, err
 	}
 	client := ttrpc.NewClient(conn, ttrpc.WithOnClose(onCloseWithShimLog))
+	log.G(ctx).Debugf("out of v2.binary.Start")
 	return &shim{
 		bundle: b.bundle,
 		client: client,

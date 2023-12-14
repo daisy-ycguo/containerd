@@ -154,6 +154,7 @@ type local struct {
 }
 
 func (l *local) Create(ctx context.Context, r *api.CreateTaskRequest, _ ...grpc.CallOption) (*api.CreateTaskResponse, error) {
+	log.G(ctx).Debug("into tasks.local.Create")
 	container, err := l.getContainer(ctx, r.ContainerID)
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
@@ -229,6 +230,8 @@ func (l *local) Create(ctx context.Context, r *api.CreateTaskRequest, _ ...grpc.
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
 	}
+	ppid, _ := c.PID(ctx)
+	log.G(ctx).Debugf("after rtime.Create, container created, ID=%s, PID=%d", c.ID(), ppid)
 	labels := map[string]string{"runtime": container.Runtime.Name}
 	if err := l.monitor.Monitor(c, labels); err != nil {
 		return nil, fmt.Errorf("monitor task: %w", err)
@@ -237,6 +240,7 @@ func (l *local) Create(ctx context.Context, r *api.CreateTaskRequest, _ ...grpc.
 	if err != nil {
 		return nil, fmt.Errorf("failed to get task pid: %w", err)
 	}
+	log.G(ctx).Debugf("outof tasks.local.Create, containerid=%s, pid=%d", r.ContainerID, pid)
 	return &api.CreateTaskResponse{
 		ContainerID: r.ContainerID,
 		Pid:         pid,
@@ -244,6 +248,7 @@ func (l *local) Create(ctx context.Context, r *api.CreateTaskRequest, _ ...grpc.
 }
 
 func (l *local) Start(ctx context.Context, r *api.StartRequest, _ ...grpc.CallOption) (*api.StartResponse, error) {
+	log.G(ctx).Debug("into tasks.local.Start")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -261,12 +266,14 @@ func (l *local) Start(ctx context.Context, r *api.StartRequest, _ ...grpc.CallOp
 	if err != nil {
 		return nil, errdefs.ToGRPC(err)
 	}
+	log.G(ctx).Debug("out of tasks.local.Start")
 	return &api.StartResponse{
 		Pid: state.Pid,
 	}, nil
 }
 
 func (l *local) Delete(ctx context.Context, r *api.DeleteTaskRequest, _ ...grpc.CallOption) (*api.DeleteResponse, error) {
+	log.G(ctx).Debug("into tasks.local.Delete")
 	container, err := l.getContainer(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -301,6 +308,7 @@ func (l *local) Delete(ctx context.Context, r *api.DeleteTaskRequest, _ ...grpc.
 }
 
 func (l *local) DeleteProcess(ctx context.Context, r *api.DeleteProcessRequest, _ ...grpc.CallOption) (*api.DeleteResponse, error) {
+	log.G(ctx).Debug("into tasks.local.DeleteProcess")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -361,6 +369,7 @@ func getProcessState(ctx context.Context, p runtime.Process) (*task.Process, err
 }
 
 func (l *local) Get(ctx context.Context, r *api.GetRequest, _ ...grpc.CallOption) (*api.GetResponse, error) {
+	log.G(ctx).Debug("into tasks.local.Get")
 	task, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -430,6 +439,7 @@ func (l *local) Resume(ctx context.Context, r *api.ResumeTaskRequest, _ ...grpc.
 }
 
 func (l *local) Kill(ctx context.Context, r *api.KillRequest, _ ...grpc.CallOption) (*ptypes.Empty, error) {
+	log.G(ctx).Debug("into tasks.local.Kill")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -447,6 +457,7 @@ func (l *local) Kill(ctx context.Context, r *api.KillRequest, _ ...grpc.CallOpti
 }
 
 func (l *local) ListPids(ctx context.Context, r *api.ListPidsRequest, _ ...grpc.CallOption) (*api.ListPidsResponse, error) {
+	log.G(ctx).Debug("into tasks.local.ListPids")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -475,6 +486,7 @@ func (l *local) ListPids(ctx context.Context, r *api.ListPidsRequest, _ ...grpc.
 }
 
 func (l *local) Exec(ctx context.Context, r *api.ExecProcessRequest, _ ...grpc.CallOption) (*ptypes.Empty, error) {
+	log.G(ctx).Debug("into tasks.local.Exec")
 	if r.ExecID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "exec id cannot be empty")
 	}
@@ -497,6 +509,7 @@ func (l *local) Exec(ctx context.Context, r *api.ExecProcessRequest, _ ...grpc.C
 }
 
 func (l *local) ResizePty(ctx context.Context, r *api.ResizePtyRequest, _ ...grpc.CallOption) (*ptypes.Empty, error) {
+	log.G(ctx).Debug("into tasks.local.ResizePty")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -517,6 +530,7 @@ func (l *local) ResizePty(ctx context.Context, r *api.ResizePtyRequest, _ ...grp
 }
 
 func (l *local) CloseIO(ctx context.Context, r *api.CloseIORequest, _ ...grpc.CallOption) (*ptypes.Empty, error) {
+	log.G(ctx).Debug("into tasks.local.CloseIO")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -536,6 +550,7 @@ func (l *local) CloseIO(ctx context.Context, r *api.CloseIORequest, _ ...grpc.Ca
 }
 
 func (l *local) Checkpoint(ctx context.Context, r *api.CheckpointTaskRequest, _ ...grpc.CallOption) (*api.CheckpointTaskResponse, error) {
+	log.G(ctx).Debug("into tasks.local.Checkpoint")
 	container, err := l.getContainer(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -594,6 +609,7 @@ func (l *local) Checkpoint(ctx context.Context, r *api.CheckpointTaskRequest, _ 
 }
 
 func (l *local) Update(ctx context.Context, r *api.UpdateTaskRequest, _ ...grpc.CallOption) (*ptypes.Empty, error) {
+	log.G(ctx).Debug("into tasks.local.Update")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err
@@ -605,6 +621,7 @@ func (l *local) Update(ctx context.Context, r *api.UpdateTaskRequest, _ ...grpc.
 }
 
 func (l *local) Metrics(ctx context.Context, r *api.MetricsRequest, _ ...grpc.CallOption) (*api.MetricsResponse, error) {
+	log.G(ctx).Debug("into tasks.local.Metrics")
 	filter, err := filters.ParseAll(r.Filters...)
 	if err != nil {
 		return nil, err
@@ -621,6 +638,7 @@ func (l *local) Metrics(ctx context.Context, r *api.MetricsRequest, _ ...grpc.Ca
 }
 
 func (l *local) Wait(ctx context.Context, r *api.WaitRequest, _ ...grpc.CallOption) (*api.WaitResponse, error) {
+	log.G(ctx).Debug("into tasks.local.Wait")
 	t, err := l.getTask(ctx, r.ContainerID)
 	if err != nil {
 		return nil, err

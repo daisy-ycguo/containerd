@@ -216,10 +216,10 @@ func (m *ShimManager) startShim(ctx context.Context, bundle *Bundle, id string, 
 		schedCore:    m.schedCore,
 	})
 	log.G(ctx).Debugf("------------------------- shimBinary's Config's containerdAddress is %q and containerdTTRPCAddress is %q --------------------------------------", m.containerdAddress, m.containerdTTRPCAddress)
-	log.G(ctx).Debugf("------------------------- ShimManager's startShim  call start function : --------------------------------------")
 
 	shim, err := b.Start(ctx, topts, func() {
-		log.G(ctx).WithField("id", id).Info("shim disconnected")
+		//debug.PrintStack()
+		log.G(ctx).WithField("id", id).Info("b.Start shim disconnected")
 		log.G(ctx).Debugf("------------------------- ShimManager's shim disconnected --------------------------------------")
 		cleanupAfterDeadShim(context.Background(), id, ns, m.shims, m.events, b)
 		// Remove self from the runtime task list. Even though the cleanupAfterDeadShim()
@@ -230,7 +230,7 @@ func (m *ShimManager) startShim(ctx context.Context, bundle *Bundle, id string, 
 	})
 	log.G(ctx).Debugf("------------------------- ShimManager's startShim  after call start function  --------------------------------------")
 	if err != nil {
-		log.G(ctx).Debugf("------------------------- shim start has error!!! --------------------------------------")
+		log.G(ctx).Debugf("shim start has error!!!, error=%q", err)
 		return nil, fmt.Errorf("start failed: %w", err)
 	}
 
@@ -405,7 +405,8 @@ func (m *TaskManager) Create(ctx context.Context, taskID string, opts runtime.Cr
 
 		return nil, fmt.Errorf("failed to create shim task: %w", err)
 	}
-
+	ppid, _ := t.PID(ctx)
+	log.G(ctx).Debugf("outof runtime.v2.manager.Create, task PID=%v", ppid)
 	return t, nil
 }
 
